@@ -80,16 +80,18 @@ func (sbc serverBackupConf) validBackup() (bool, error) {
 		noPrefix := strings.ReplaceAll(file, sbc.FileExtension, "")
 		dateTimeString := strings.ReplaceAll(noPrefix, sbc.DateTimePrefix, "")
 
-		dateTime, err := time.Parse(sbc.TimeFormat, dateTimeString)
+		// all backup file time stamps are RFC3339 compliant
+		backupTime, err := time.Parse(time.RFC3339, dateTimeString)
 		if err != nil {
 			fmt.Printf("could not parse time string: %v", err)
 		}
 
-		currentTime := time.Now()
+		// get current time and adjust to CST (-6 hours)
+		currentTime := time.Now().UTC().Add(-6 * time.Hour)
 		// threshold time is 24 hours before the current time
 		thresholdTime := currentTime.Add(-24 * time.Hour)
 
-		if dateTime.After(thresholdTime) {
+		if backupTime.After(thresholdTime) {
 			return true, nil
 		}
 	}
@@ -137,7 +139,7 @@ func main() {
 
 	content := fmt.Sprintf("goback run: %s\n\n%s",
 		runTime.Format("01-02-2006 15:04:05"),
-		strings.Join(backupStatusArr,"\n"))
+		strings.Join(backupStatusArr, "\n"))
 
 	message := discordwebhook.Message{
 		Username: &username,
