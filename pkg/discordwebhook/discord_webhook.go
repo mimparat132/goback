@@ -29,7 +29,7 @@ func SendMessage(url string, message Message) error {
 			return err
 		}
 
-		return fmt.Errorf(string(responseBody))
+		return fmt.Errorf("%s",string(responseBody))
 	}
 
 	return nil
