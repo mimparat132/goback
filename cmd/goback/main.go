@@ -76,9 +76,10 @@ func main() {
 		os.Exit(1)
 	}
 
+	// batching the backup status report being sent to discord
 	for i := range len(backupStatusArr) {
 		if i%2 == 0 && i != len(backupStatusArr)-1 {
-			backStatusSlice := strings.Join(backupStatusArr[i:i+2], "\n")
+			backStatusSlice := strings.Join(backupStatusArr[i:i+2], "\n\n")
 			messageSlice := discordwebhook.Message{
 				Username: &username,
 				Content:  &backStatusSlice,
@@ -93,7 +94,9 @@ func main() {
 		}
 
 		// This is the last element
-		if i == len(backupStatusArr)-1 {
+		// Only need to execute this block if the number of elements
+		// in the backup status array is odd
+		if i == len(backupStatusArr)-1 && len(backupStatusArr)%2 != 0 {
 			messageSlice := discordwebhook.Message{
 				Username: &username,
 				Content:  &backupStatusArr[i],
