@@ -11,6 +11,14 @@ import (
 	"github.com/mimparat132/goback/pkg/discordwebhook"
 )
 
+func returnStateString(valid bool) string {
+	if valid {
+		return "VALID"
+	} else {
+		return "FAIL"
+	}
+}
+
 func main() {
 
 	data, err := os.ReadFile("/etc/goback/goback_conf.json")
@@ -29,28 +37,26 @@ func main() {
 	backupStatusArr := []string{}
 
 	for _, backupConf := range gobackConf.ServerBackupConfs {
-		backupValid, fileInfo,unixTimeStampWithTimeZone, err := backupConf.ValidBackup()
+		backupCheckRes, err := backupConf.ValidBackup()
 		if err != nil {
 			errBackupStatus := fmt.Sprintf("FAIL: could not check backup for server: %s: %v\n", backupConf.ServerName, err)
 			backupStatusArr = append(backupStatusArr, errBackupStatus)
 			continue
 		}
 
-		if backupValid {
-			validBackupStatus := fmt.Sprintf("\n%s:\n\tstate: VALID\n\tfile_name: %s\n\tbackup_time: %s\n\tfile_size: %d KB",
-				backupConf.ServerName,
-				fileInfo.Name(),
-				unixTimeStampWithTimeZone,
-				fileInfo.Size()/1024,
-			)
+		backupStatus := fmt.Sprintf("\n%s:\n\tprimary_backup_state: %s\n\tprimary_backup_filename: %s\n\tprimary_backup_time: %s\n\tprimary_backup_size: %d KB\n\tsecondary_backup_state: %s\n\tsecondary_backup_filename: %s\n\tsecondary_backup_time: %s\n\tsecondary_backup_size: %d KB",
+			backupConf.ServerName,
+			returnStateString(backupCheckRes.PrimaryBackupValid),
+			backupCheckRes.PrimaryBackupFileInfo.Name(),
+			backupCheckRes.PrimaryBackupTimeString,
+			backupCheckRes.PrimaryBackupFileInfo.Size()/1024,
+			returnStateString(backupCheckRes.SecondaryBackupValid),
+			backupCheckRes.SecondaryBackupFileInfo.Name(),
+			backupCheckRes.SecondaryBackupTimeString,
+			backupCheckRes.SecondaryBackupFileInfo.Size()/1024,
+		)
 
-			backupStatusArr = append(backupStatusArr, validBackupStatus)
-
-		} else {
-			failedBackupStatus := fmt.Sprintf("%s:\n\tstate: FAIL",
-				backupConf.ServerName)
-			backupStatusArr = append(backupStatusArr, failedBackupStatus)
-		}
+		backupStatusArr = append(backupStatusArr, backupStatus)
 	}
 
 	username := "goback"

@@ -10,6 +10,8 @@ type ServerBackupConf struct {
 	ServerName string `json:"server_name"`
 	// directory name that holds the backups for the given server
 	BaseDir string `json:"base_dir"`
+	// Secondary Backup server target
+	SecondaryBaseDir string `json:"secondary_base_dir"`
 	// does this backup get taken daily
 	Daily bool `json:"daily"`
 	// the file extension of the backup file
@@ -21,6 +23,31 @@ type ServerBackupConf struct {
 	TimeFormat string `json:"time_format"`
 }
 
+type BackupCheckResponse struct {
+	// Does the primary backup file exist
+	PrimaryBackupValid bool
+	// Primary Backup file info ( name, size, etc...)
+	PrimaryBackupFileInfo fs.FileInfo
+	// DateTime string of the valid primary backup file
+	PrimaryBackupTimeString string
+	// Does the secondary backup file exist
+	SecondaryBackupValid bool
+	// Secondary Backup file info ( name, size, etc...)
+	SecondaryBackupFileInfo fs.FileInfo
+	// DateTime string of the valid secondary backup file
+	SecondaryBackupTimeString string
+}
+
+// func NewValidBackupRepsonse() *ValidBackupResponse {
+// 	return &ValidBackupResponse{
+// 		PrimaryBackupValid: false,
+// 		PrimaryBackupFileInfo: nil,
+// 		PrimaryBackupTimeString: "",
+// 
+// 	}
+// 
+// }
+
 type GobackConf struct {
 	ServerBackupConfs []ServerBackupConf `json:"server_backup_confs"`
 	DiscordWebHookUrl string             `json:"discord_webhook_url,omitempty"`
@@ -28,5 +55,5 @@ type GobackConf struct {
 
 type BackupFileRes struct {
 	fileInfo fs.FileInfo
-	valid bool
+	valid    bool
 }

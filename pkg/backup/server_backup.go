@@ -27,19 +27,22 @@ func (sbc ServerBackupConf) IsValidBackupDir() (bool, error) {
 
 }
 
-func (sbc ServerBackupConf) ValidBackup() (bool, fs.FileInfo, string, error) {
+func (sbc ServerBackupConf) ValidBackup() (BackupCheckResponse, error) {
+
+	backupCheckRes := BackupCheckResponse{}
 
 	fileInfoArr := []fs.FileInfo{}
 
 	validbackupDir, err := sbc.IsValidBackupDir()
 	if err != nil {
-		return false, nil, "", fmt.Errorf("could not check if backup is valid: %v", err)
+		return backupCheckRes, fmt.Errorf("could not check if backup is valid: %v", err)
 	}
 
 	if !validbackupDir {
-		return false, nil, "", fmt.Errorf("backup directory does not exist.")
+		return backupCheckRes, fmt.Errorf("backup directory does not exist.")
 	}
 
+	// search the primary backup target
 	fsys := os.DirFS(sbc.BaseDir)
 
 	fs.WalkDir(fsys, ".", func(path string, dir fs.DirEntry, err error) error {
@@ -64,7 +67,7 @@ func (sbc ServerBackupConf) ValidBackup() (bool, fs.FileInfo, string, error) {
 
 		i, err := strconv.ParseInt(dateTimeString, 10, 64)
 		if err != nil {
-			return false, nil, "", fmt.Errorf("could not parse unix time int: %v", err)
+			return backupCheckRes, fmt.Errorf("could not parse unix time int: %v", err)
 		}
 		unixTimeStringWithTimeZone := time.Unix(i, 0).String()
 		unixTimeString := time.Unix(i, 0).UTC().String()
@@ -87,11 +90,42 @@ func (sbc ServerBackupConf) ValidBackup() (bool, fs.FileInfo, string, error) {
 		thresholdTime := currentTime.Add(-24 * time.Hour)
 
 		if backupTime.After(thresholdTime) {
-			return true, fileInfo, unixTimeStringWithTimeZone, nil
+			backupCheckRes.PrimaryBackupValid = true
+			backupCheckRes.PrimaryBackupFileInfo = fileInfo
+			backupCheckRes.PrimaryBackupTimeString = unixTimeStringWithTimeZone
 		}
 	}
 
-	return false, nil, "", nil
+	// search the primary backup target
+	fsysSecondary := os.DirFS(sbc.SecondaryBaseDir)
+
+	fs.WalkDir(fsysSecondary, ".", func(path string, dir fs.DirEntry, err error) error {
+
+		if !dir.IsDir() {
+			fileInfo, err := dir.Info()
+
+			if err != nil {
+				return err
+			}
+
+			fileInfoArr = append(fileInfoArr, fileInfo)
+		}
+
+		return nil
+	})
+
+	for _, fileInfo := range fileInfoArr {
+		// If true then the backup file exists on the primary and secondary
+		// backup targets
+		if fileInfo.Name() == backupCheckRes.PrimaryBackupFileInfo.Name() {
+			backupCheckRes.SecondaryBackupValid = true
+			backupCheckRes.SecondaryBackupFileInfo = fileInfo
+			backupCheckRes.SecondaryBackupTimeString = fileInfo.ModTime().String()
+			break
+		}
+	}
+
+	return backupCheckRes, nil
 }
 
 func (sbc ServerBackupConf) PrintFileNamesInEpoch() error {
