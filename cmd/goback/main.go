@@ -63,19 +63,48 @@ func main() {
 
 	runTime := time.Now()
 
-	content := fmt.Sprintf("goback run: %s\n%s",
-		runTime.Format("01-02-2006 15:04:05"),
-		strings.Join(backupStatusArr, "\n"))
+	content := fmt.Sprintf("goback run: %s\n", runTime.Format("01-02-2006 15:04:05"))
 
-	message := discordwebhook.Message{
+	messageSlice := discordwebhook.Message{
 		Username: &username,
 		Content:  &content,
 	}
 
-	err = discordwebhook.SendMessage(gobackConf.DiscordWebHookUrl, message)
+	err = discordwebhook.SendMessage(gobackConf.DiscordWebHookUrl, messageSlice)
 	if err != nil {
 		fmt.Printf("[goback] - error: could not send message to discord notification channel: %v\n", err)
 		os.Exit(1)
+	}
+
+	for i := range len(backupStatusArr) {
+		if i%2 == 0 && i != len(backupStatusArr)-1 {
+			backStatusSlice := strings.Join(backupStatusArr[i:i+2], "\n")
+			messageSlice := discordwebhook.Message{
+				Username: &username,
+				Content:  &backStatusSlice,
+			}
+
+			err = discordwebhook.SendMessage(gobackConf.DiscordWebHookUrl, messageSlice)
+			if err != nil {
+				fmt.Printf("[goback] - error: could not send message to discord notification channel: %v\n", err)
+				os.Exit(1)
+			}
+			continue
+		}
+
+		// This is the last element
+		if i == len(backupStatusArr)-1 {
+			messageSlice := discordwebhook.Message{
+				Username: &username,
+				Content:  &backupStatusArr[i],
+			}
+
+			err = discordwebhook.SendMessage(gobackConf.DiscordWebHookUrl, messageSlice)
+			if err != nil {
+				fmt.Printf("[goback] - error: could not send message to discord notification channel: %v\n", err)
+				os.Exit(1)
+			}
+		}
 	}
 
 	return
