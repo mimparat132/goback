@@ -93,7 +93,14 @@ func (sbc ServerBackupConf) ValidBackup() (BackupCheckResponse, error) {
 			backupCheckRes.PrimaryBackupValid = true
 			backupCheckRes.PrimaryBackupFileInfo = fileInfo
 			backupCheckRes.PrimaryBackupTimeString = unixTimeStringWithTimeZone
+			break
 		}
+	}
+
+	// If the primary backup isn't in place then the secondary backup wont
+	// be present. We can return false for everything here
+	if !backupCheckRes.PrimaryBackupValid {
+		return backupCheckRes, nil
 	}
 
 	// search the primary backup target
