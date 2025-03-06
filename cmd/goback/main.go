@@ -90,7 +90,7 @@ func main() {
 
 		// Add a newline to make the output more readable by separating
 		// each backup status block
-		backupStatus = backupStatus + "\n"
+		backupStatus = backupStatus + "\n\n"
 
 		messageSlice := discordwebhook.Message{
 			Username: &username,
