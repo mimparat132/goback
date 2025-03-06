@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/mimparat132/goback/pkg/backup"
@@ -44,6 +43,16 @@ func main() {
 			continue
 		}
 
+		if !backupCheckRes.PrimaryBackupValid {
+			backupStatus := fmt.Sprintf("\n%s:\n\tprimary_backup_state: %s\n\tsecondary_backup_state: %s",
+				backupConf.ServerName,
+				returnStateString(backupCheckRes.PrimaryBackupValid),
+				returnStateString(backupCheckRes.SecondaryBackupValid),
+			)
+			backupStatusArr = append(backupStatusArr, backupStatus)
+			continue
+		}
+
 		backupStatus := fmt.Sprintf("\n%s:\n\tprimary_backup_state: %s\n\tprimary_backup_filename: %s\n\tprimary_backup_time: %s\n\tprimary_backup_size: %d KB\n\tsecondary_backup_state: %s\n\tsecondary_backup_filename: %s\n\tsecondary_backup_time: %s\n\tsecondary_backup_size: %d KB",
 			backupConf.ServerName,
 			returnStateString(backupCheckRes.PrimaryBackupValid),
@@ -77,36 +86,17 @@ func main() {
 	}
 
 	// batching the backup status report being sent to discord
-	for i := range len(backupStatusArr) {
-		if i%2 == 0 && i != len(backupStatusArr)-1 {
-			backStatusSlice := strings.Join(backupStatusArr[i:i+2], "\n\n")
-			messageSlice := discordwebhook.Message{
-				Username: &username,
-				Content:  &backStatusSlice,
-			}
+	for _, backupStatus := range backupStatusArr {
 
-			err = discordwebhook.SendMessage(gobackConf.DiscordWebHookUrl, messageSlice)
-			if err != nil {
-				fmt.Printf("[goback] - error: could not send message to discord notification channel: %v\n", err)
-				os.Exit(1)
-			}
-			continue
+		messageSlice := discordwebhook.Message{
+			Username: &username,
+			Content:  &backupStatus,
 		}
 
-		// This is the last element
-		// Only need to execute this block if the number of elements
-		// in the backup status array is odd
-		if i == len(backupStatusArr)-1 && len(backupStatusArr)%2 != 0 {
-			messageSlice := discordwebhook.Message{
-				Username: &username,
-				Content:  &backupStatusArr[i],
-			}
-
-			err = discordwebhook.SendMessage(gobackConf.DiscordWebHookUrl, messageSlice)
-			if err != nil {
-				fmt.Printf("[goback] - error: could not send message to discord notification channel: %v\n", err)
-				os.Exit(1)
-			}
+		err = discordwebhook.SendMessage(gobackConf.DiscordWebHookUrl, messageSlice)
+		if err != nil {
+			fmt.Printf("[goback] - error: could not send message to discord notification channel: %v\n", err)
+			os.Exit(1)
 		}
 	}
 

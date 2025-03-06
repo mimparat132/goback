@@ -45,7 +45,7 @@ func (sbc ServerBackupConf) ValidBackup() (BackupCheckResponse, error) {
 	// search the primary backup target
 	fsys := os.DirFS(sbc.BaseDir)
 
-	fs.WalkDir(fsys, ".", func(path string, dir fs.DirEntry, err error) error {
+	err = fs.WalkDir(fsys, ".", func(path string, dir fs.DirEntry, err error) error {
 
 		if !dir.IsDir() {
 			fileInfo, err := dir.Info()
@@ -59,6 +59,10 @@ func (sbc ServerBackupConf) ValidBackup() (BackupCheckResponse, error) {
 
 		return nil
 	})
+
+	if err != nil {
+		return backupCheckRes, fmt.Errorf("could not walk directory: %s: %v",sbc.BaseDir,err)
+	}
 
 	for _, fileInfo := range fileInfoArr {
 
