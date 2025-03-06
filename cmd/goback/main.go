@@ -88,6 +88,10 @@ func main() {
 	// batching the backup status report being sent to discord
 	for _, backupStatus := range backupStatusArr {
 
+		// Add a newline to make the output more readable by separating
+		// each backup status block
+		backupStatus = backupStatus + "\n"
+
 		messageSlice := discordwebhook.Message{
 			Username: &username,
 			Content:  &backupStatus,
