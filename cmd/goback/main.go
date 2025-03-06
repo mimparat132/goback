@@ -38,13 +38,13 @@ func main() {
 	for _, backupConf := range gobackConf.ServerBackupConfs {
 		backupCheckRes, err := backupConf.ValidBackup()
 		if err != nil {
-			errBackupStatus := fmt.Sprintf("FAIL: could not check backup for server: %s: %v\n", backupConf.ServerName, err)
+			errBackupStatus := fmt.Sprintf("FAIL: could not check backup for server: %s: %v\n\n", backupConf.ServerName, err)
 			backupStatusArr = append(backupStatusArr, errBackupStatus)
 			continue
 		}
 
 		if !backupCheckRes.PrimaryBackupValid {
-			backupStatus := fmt.Sprintf("\n%s:\n\tprimary_backup_state: %s\n\tsecondary_backup_state: %s",
+			backupStatus := fmt.Sprintf("\n%s:\n\tprimary_backup_state: %s\n\tsecondary_backup_state: %s\n\n",
 				backupConf.ServerName,
 				returnStateString(backupCheckRes.PrimaryBackupValid),
 				returnStateString(backupCheckRes.SecondaryBackupValid),
@@ -53,7 +53,7 @@ func main() {
 			continue
 		}
 
-		backupStatus := fmt.Sprintf("\n%s:\n\tprimary_backup_state: %s\n\tprimary_backup_filename: %s\n\tprimary_backup_time: %s\n\tprimary_backup_size: %d KB\n\tsecondary_backup_state: %s\n\tsecondary_backup_filename: %s\n\tsecondary_backup_time: %s\n\tsecondary_backup_size: %d KB",
+		backupStatus := fmt.Sprintf("\n%s:\n\tprimary_backup_state: %s\n\tprimary_backup_filename: %s\n\tprimary_backup_time: %s\n\tprimary_backup_size: %d KB\n\tsecondary_backup_state: %s\n\tsecondary_backup_filename: %s\n\tsecondary_backup_time: %s\n\tsecondary_backup_size: %d KB\n\n",
 			backupConf.ServerName,
 			returnStateString(backupCheckRes.PrimaryBackupValid),
 			backupCheckRes.PrimaryBackupFileInfo.Name(),
@@ -87,10 +87,6 @@ func main() {
 
 	// batching the backup status report being sent to discord
 	for _, backupStatus := range backupStatusArr {
-
-		// Add a newline to make the output more readable by separating
-		// each backup status block
-		backupStatus = backupStatus + "\n\n"
 
 		messageSlice := discordwebhook.Message{
 			Username: &username,
