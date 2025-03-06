@@ -38,16 +38,6 @@ type BackupCheckResponse struct {
 	SecondaryBackupTimeString string
 }
 
-// func NewValidBackupRepsonse() *ValidBackupResponse {
-// 	return &ValidBackupResponse{
-// 		PrimaryBackupValid: false,
-// 		PrimaryBackupFileInfo: nil,
-// 		PrimaryBackupTimeString: "",
-// 
-// 	}
-// 
-// }
-
 type GobackConf struct {
 	ServerBackupConfs []ServerBackupConf `json:"server_backup_confs"`
 	DiscordWebHookUrl string             `json:"discord_webhook_url,omitempty"`
