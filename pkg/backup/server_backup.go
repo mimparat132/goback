@@ -10,14 +10,14 @@ import (
 	"time"
 )
 
-func (sbc ServerBackupConf) IsValidBackupDir() (bool, error) {
+func (sbc ServerBackupConf) IsValidBackupDir(dirPath string) (bool, error) {
 
-	fileInfo, err := os.Stat(sbc.BaseDir)
+	fileInfo, err := os.Stat(dirPath)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return false, nil
 		} else {
-			return false, fmt.Errorf("could not stat base directory path: %v", err)
+			return false, fmt.Errorf("could not stat path '%s': %v", dirPath, err)
 		}
 	}
 
@@ -33,13 +33,22 @@ func (sbc ServerBackupConf) ValidBackup() (BackupCheckResponse, error) {
 
 	fileInfoArr := []fs.FileInfo{}
 
-	validbackupDir, err := sbc.IsValidBackupDir()
+	validBaseDir, err := sbc.IsValidBackupDir(sbc.BaseDir)
 	if err != nil {
 		return backupCheckRes, fmt.Errorf("could not check if backup is valid: %v", err)
 	}
 
-	if !validbackupDir {
-		return backupCheckRes, fmt.Errorf("backup directory does not exist.")
+	if !validBaseDir {
+		return backupCheckRes, fmt.Errorf("primary backup base directory does not exist.")
+	}
+
+	validSecondaryBaseDir, err := sbc.IsValidBackupDir(sbc.SecondaryBaseDir)
+	if err != nil {
+		return backupCheckRes, fmt.Errorf("could not check if backup is valid: %v", err)
+	}
+
+	if !validSecondaryBaseDir {
+		return backupCheckRes, fmt.Errorf("secondary backup base directory does not exist.")
 	}
 
 	// search the primary backup target
@@ -61,7 +70,7 @@ func (sbc ServerBackupConf) ValidBackup() (BackupCheckResponse, error) {
 	})
 
 	if err != nil {
-		return backupCheckRes, fmt.Errorf("could not walk directory: %s: %v",sbc.BaseDir,err)
+		return backupCheckRes, fmt.Errorf("could not walk directory: %s: %v", sbc.BaseDir, err)
 	}
 
 	for _, fileInfo := range fileInfoArr {
