@@ -152,13 +152,22 @@ func (sbc ServerBackupConf) PrintFileNamesInEpoch() error {
 
 	files := []string{}
 
-	validbackupDir, err := sbc.IsValidBackupDir()
+	validBaseDir, err := sbc.IsValidBackupDir(sbc.BaseDir)
 	if err != nil {
 		return fmt.Errorf("could not check if backup is valid: %v", err)
 	}
 
-	if !validbackupDir {
-		return fmt.Errorf("backup directory does not exist.")
+	if !validBaseDir {
+		return fmt.Errorf("primary backup base directory does not exist.")
+	}
+
+	validSecondaryBaseDir, err := sbc.IsValidBackupDir(sbc.SecondaryBaseDir)
+	if err != nil {
+		return fmt.Errorf("could not check if backup is valid: %v", err)
+	}
+
+	if !validSecondaryBaseDir {
+		return fmt.Errorf("secondary backup base directory does not exist.")
 	}
 
 	fsys := os.DirFS(sbc.BaseDir)
@@ -198,13 +207,22 @@ func (sbc ServerBackupConf) PrintFileNamesInRFC3339() error {
 
 	files := []string{}
 
-	validbackupDir, err := sbc.IsValidBackupDir()
+	validBaseDir, err := sbc.IsValidBackupDir(sbc.BaseDir)
 	if err != nil {
 		return fmt.Errorf("could not check if backup is valid: %v", err)
 	}
 
-	if !validbackupDir {
-		return fmt.Errorf("backup directory does not exist.")
+	if !validBaseDir {
+		return fmt.Errorf("primary backup base directory does not exist.")
+	}
+
+	validSecondaryBaseDir, err := sbc.IsValidBackupDir(sbc.SecondaryBaseDir)
+	if err != nil {
+		return fmt.Errorf("could not check if backup is valid: %v", err)
+	}
+
+	if !validSecondaryBaseDir {
+		return fmt.Errorf("secondary backup base directory does not exist.")
 	}
 
 	fsys := os.DirFS(sbc.BaseDir)
